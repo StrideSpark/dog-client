@@ -35,7 +35,7 @@ export default class DogClient {
         }
     }
 
-    sendCountOne(metric: string) {
+    async sendCountOne(metric: string) {
         dogapi.metric.send(this.getFullMetric(metric), 1, {
             host: this.host,
             tags: this.tags,
@@ -43,7 +43,7 @@ export default class DogClient {
         }, this.datadogCallback);
     }
 
-    sendCount(metric: string, count: number) {
+    async sendCount(metric: string, count: number) {
         dogapi.metric.send(this.getFullMetric(metric), count, {
             host: this.host,
             tags: this.tags,
@@ -51,7 +51,7 @@ export default class DogClient {
         }, this.datadogCallback);
     }
 
-    sendCountWithTags(metric: string, count: number, tags: Array<string>) {
+    async sendCountWithTags(metric: string, count: number, tags: Array<string>) {
         dogapi.metric.send(this.getFullMetric(metric), count, {
             host: this.host,
             tags: this.tags.concat(tags),
@@ -59,7 +59,7 @@ export default class DogClient {
         }, this.datadogCallback);
     }
 
-    sendCountWithCallback(metric: string, callback: any, param: any) {
+    async sendCountWithCallback(metric: string, callback: any, param: any) {
         dogapi.metric.send(this.getFullMetric(metric), 1, {
             host: this.host,
             tags: this.tags,
