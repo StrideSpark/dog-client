@@ -20,7 +20,7 @@ tap.test("test mock", async function(t) {
 //Commented out because these actually hit two apis: credstash and dogapi.
 // tap.test("test real", async function(t) {
 //     let client = new DogClient();
-//     t.equal(Response.OK, await client.initDogAPI("development", ["tag:1"], "development.prefix", "testhost"));
+//     t.equal(Response.OK, await client.initDogAPI("development", ["tag:1"], "development.prefix", "testhost", false));
 //     t.equal(Response.OK, await client.sendCountOne("fake.metric"));
 //     t.equal(Response.OK, await client.sendCount("fake.metric", 2));
 //     t.equal(Response.OK, await client.sendCountWithTags("fake.metric", 5, ["tag:2"]));

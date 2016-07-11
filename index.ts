@@ -18,7 +18,7 @@ export default class DogClient {
     private standardOptions: {[index : string] : any};
     private mock: boolean = false;
 
-    async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock : boolean = false) : Promise<Response> {
+    async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock : boolean) : Promise<Response> {
         //mock means that nothing gets fired
         if (mock) {
             this.mock = true;
