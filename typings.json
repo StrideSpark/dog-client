@@ -1,5 +1,8 @@
 {
   "globalDependencies": {
     "node": "registry:dt/node#6.0.0+20160621231320"
+  },
+  "dependencies": {
+    "tap": "github:dlmanning/node-tap/tap.d.ts#ffd492d2efb0fc645b8956a2cc7db3c092bbd380"
   }
 }
