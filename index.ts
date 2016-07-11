@@ -53,8 +53,6 @@ export default class DogClient {
                 api_key: api_key,
                 app_key: app_key
             });
-
-            dogapi.metric.send(this.getFullMetric("load"), 1, { host: this.host, tags: this.tags, type: "count" }, this.datadogCallback);
             return Response.OK;
 
         } else {
