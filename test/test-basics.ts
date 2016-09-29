@@ -19,6 +19,7 @@ describe("basic test", function() {
     });
 
     it("real", async function() {
+        this.timeout(3000);
         let client = new DogClient();
         assert.equal(Response.OK, await client.initDogAPI("development", ["tag:1"], "development.prefix", "testhost", false));
         assert.equal(Response.OK, await client.sendCountOne("fake.metric"));
