@@ -82,7 +82,7 @@ export default class DogClient {
         return this.promisifySend(metric, count, {host: this.host, tags: this.tags.concat(tags), type: "count"});
     }
     
-    private promisifySend(metric, count, options) : Promise<Response> {
+    private promisifySend(metric: string, count:number, options:any) : Promise<Response> {
         return new Promise<Response>(
             (resolve, reject) =>
                 dogapi.metric.send(this.getFullMetric(metric), count, options, (err:Error, resp:any) => {
