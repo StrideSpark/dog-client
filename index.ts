@@ -2,7 +2,7 @@
  * Created by meganschoendorf on 6/3/16.
  */
 
-import {fetchCred} from 'credstash-promise';
+import { fetchCred } from 'credstash-promise';
 let dogapi = require('dogapi');
 
 export enum Response {
@@ -15,10 +15,11 @@ export default class DogClient {
     private tags: Array<string> = [];
     private prefix: string;
     private host: string;
-    private standardOptions: {[index : string] : any};
+    private standardOptions: { [index: string]: any };
+    private standardGaugeOptions: { [index: string]: any };
     private mock: boolean = false;
 
-    async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock : boolean) : Promise<Response> {
+    async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock: boolean): Promise<Response> {
         //mock means that nothing gets fired
         if (mock) {
             this.mock = true;
@@ -38,14 +39,15 @@ export default class DogClient {
             tags: this.tags,
             type: "count"
         };
+        this.standardGaugeOptions = Object.assign({}, this.standardOptions, { type: 'gauge' });
 
-        let keys : Array<string> = await Promise.all([
+        let keys: Array<string> = await Promise.all([
             fetchCred(env + ".datadog.appkey"),
             fetchCred(env + ".datadog.apikey")
         ]);
 
-        let app_key : string = keys[0];
-        let api_key : string = keys[1];
+        let app_key: string = keys[0];
+        let api_key: string = keys[1];
 
         if (app_key && api_key) {
             console.log('recieved data dog creds from credstash');
@@ -61,31 +63,38 @@ export default class DogClient {
         }
     }
 
-    sendCountOne(metric: string) : Promise<Response> {
+    sendCountOne(metric: string): Promise<Response> {
         if (this.mock) {
             return Promise.resolve(Response.MOCKED);
         }
-        return this.promisifySend(metric, 1, this.standardOptions);
+        return this._send(metric, 1, this.standardOptions);
     }
 
-    sendCount(metric: string, count: number) : Promise<Response> {
+    sendCount(metric: string, count: number): Promise<Response> {
         if (this.mock) {
             return Promise.resolve(Response.MOCKED);
         }
-        return this.promisifySend(metric, count, this.standardOptions);
+        return this._send(metric, count, this.standardOptions);
     }
 
-    sendCountWithTags(metric: string, count: number, tags: Array<string>) : Promise<Response> {
+    sendCountWithTags(metric: string, count: number, tags: Array<string>): Promise<Response> {
         if (this.mock) {
             return Promise.resolve(Response.MOCKED);
         }
-        return this.promisifySend(metric, count, {host: this.host, tags: this.tags.concat(tags), type: "count"});
+        return this._send(metric, count, { host: this.host, tags: this.tags.concat(tags), type: "count" });
     }
-    
-    private promisifySend(metric: string, count:number, options:any) : Promise<Response> {
+
+    sendGauge(metric: string, value: number): Promise<Response> {
+        if (this.mock) {
+            return Promise.resolve(Response.MOCKED);
+        }
+        return this._send(metric, value, this.standardGaugeOptions);
+    }
+
+    _send(metric: string, count: number, options: any): Promise<Response> {
         return new Promise<Response>(
             (resolve, reject) =>
-                dogapi.metric.send(this.getFullMetric(metric), count, options, (err:Error, resp:any) => {
+                dogapi.metric.send(this.getFullMetric(metric), count, options, (err: Error, resp: any) => {
                     if (err) {
                         console.error(err);
                         resolve(Response.ERROR);
