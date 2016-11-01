@@ -11,8 +11,10 @@
   "author": "",
   "license": "MIT",
   "repository": "StrideSpark/dog-client",
+  "peerDependencies": {
+    "@stridespark/model-core": ">2.6.0"
+  },
   "dependencies": {
-    "@stridespark/model-core": "2.6.0",
     "chai": "3.5.0",
     "credstash-promise": "2.0.2",
     "dogapi": "2.5.0",
@@ -26,6 +28,7 @@
     "istanbul": "0.4.5",
     "mocha": "3.1.0",
     "publish": "0.6.0",
-    "typescript": "2.0.3"
+    "typescript": "2.0.3",
+    "@stridespark/model-core": ">2.6.0"
   }
 }
