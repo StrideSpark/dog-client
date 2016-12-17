@@ -4,6 +4,10 @@
   "description": "dogapi wrapper with typescript definitions",
   "main": "index.js",
   "typings": "index.d.ts",
+  "files": [
+    "*.js",
+    "*.d.ts"
+  ],
   "scripts": {
     "test": "istanbul cover _mocha",
     "2npm": "tsc --declaration && publish"
@@ -12,19 +16,18 @@
   "license": "MIT",
   "repository": "StrideSpark/dog-client",
   "dependencies": {
-    "chai": "3.5.0",
     "credstash-promise": "2.0.2",
-    "dogapi": "2.5.0",
-    "es6-promise": "4.0.3"
+    "dogapi": "2.6.0"
   },
   "devDependencies": {
     "@types/chai": "3.4.34",
     "@types/mocha": "2.2.32",
     "@types/node": "6.0.41",
     "aws-sdk": "2.6.5",
+    "chai": "3.5.0",
     "istanbul": "0.4.5",
     "mocha": "3.1.0",
     "publish": "0.6.0",
-    "typescript": "2.0.3"
+    "typescript": "2.0.10"
   }
 }
