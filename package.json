@@ -16,7 +16,7 @@
   "license": "MIT",
   "repository": "StrideSpark/dog-client",
   "dependencies": {
-    "credstash-promise": "2.0.2",
+    "credstash-promise": "2.0.3",
     "dogapi": "2.6.0"
   },
   "devDependencies": {

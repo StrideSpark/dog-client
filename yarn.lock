@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@stridespark/credstash@1.0.2":
+"@stridespark/credstash@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@stridespark/credstash/-/credstash-1.0.2.tgz#0f795bfb862529991e673b9c3cf8e3e602fcf8e4"
   dependencies:
@@ -327,11 +327,11 @@ core-util-is@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
 
-credstash-promise@2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/credstash-promise/-/credstash-promise-2.0.2.tgz#28787a8ebe10fbd262e27c866e704efcd49a5717"
+credstash-promise@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/credstash-promise/-/credstash-promise-2.0.3.tgz#19c69171c8daa9337b44cf47b3b0c24cb764ad5f"
   dependencies:
-    "@stridespark/credstash" "1.0.2"
+    "@stridespark/credstash" "^1.0.2"
 
 cryptiles@2.x.x:
   version "2.0.5"
@@ -931,11 +931,7 @@ lodash.padstart@^4.1.0:
   version "4.6.1"
   resolved "https://registry.yarnpkg.com/lodash.padstart/-/lodash.padstart-4.6.1.tgz#d2e3eebff0d9d39ad50f5cbd1b52a7bce6bb611b"
 
-lodash@^4.14.0:
-  version "4.16.4"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.16.4.tgz#01ce306b9bad1319f2a5528674f88297aeb70127"
-
-lodash@latest:
+lodash@^4.14.0, lodash@latest:
   version "4.17.2"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.2.tgz#34a3055babe04ce42467b607d700072c7ff6bf42"
 
