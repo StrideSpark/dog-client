@@ -11,6 +11,10 @@ export enum Response {
     MOCKED
 }
 
+export interface MockData {
+    [index: string]: { [tag: string]: number }
+}
+
 export default class DogClient {
     private tags: Array<string> = [];
     private prefix: string;
@@ -18,14 +22,9 @@ export default class DogClient {
     private standardOptions: { [index: string]: any };
     private standardGaugeOptions: { [index: string]: any };
     private mock: boolean = false;
+    private mockData: MockData = {}
 
     async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock: boolean): Promise<Response> {
-        //mock means that nothing gets fired
-        if (mock) {
-            this.mock = true;
-            return Response.MOCKED;
-        }
-
         this.prefix = prefix;
         this.host = host;
 
@@ -41,6 +40,12 @@ export default class DogClient {
         };
         this.standardGaugeOptions = Object.assign({}, this.standardOptions, { type: 'gauge' });
 
+        //mock means that nothing gets fired
+        if (mock) {
+            this.mock = true;
+            return Response.MOCKED;
+        }
+
         let keys: Array<string> = await Promise.all([
             fetchCred(env + ".datadog.appkey"),
             fetchCred(env + ".datadog.apikey")
@@ -50,7 +55,6 @@ export default class DogClient {
         let api_key: string = keys[1];
 
         if (app_key && api_key) {
-            console.log('recieved data dog creds from credstash');
             dogapi.initialize({
                 api_key: api_key,
                 app_key: app_key
@@ -65,13 +69,23 @@ export default class DogClient {
 
     sendCountOne(metric: string): Promise<Response> {
         if (this.mock) {
+            this._addToMockData(metric, 1, []);
             return Promise.resolve(Response.MOCKED);
         }
         return this._send(metric, 1, this.standardOptions);
     }
 
+    sendCountOneWithTags(metric: string, tags: Array<string>): Promise<Response> {
+        if (this.mock) {
+            this._addToMockData(metric, 1, tags);
+            return Promise.resolve(Response.MOCKED);
+        }
+        return this._send(metric, 1, { host: this.host, tags: this.tags.concat(tags), type: "count" });
+    }
+
     sendCount(metric: string, count: number): Promise<Response> {
         if (this.mock) {
+            this._addToMockData(metric, count, []);
             return Promise.resolve(Response.MOCKED);
         }
         return this._send(metric, count, this.standardOptions);
@@ -79,6 +93,7 @@ export default class DogClient {
 
     sendCountWithTags(metric: string, count: number, tags: Array<string>): Promise<Response> {
         if (this.mock) {
+            this._addToMockData(metric, count, tags);
             return Promise.resolve(Response.MOCKED);
         }
         return this._send(metric, count, { host: this.host, tags: this.tags.concat(tags), type: "count" });
@@ -86,15 +101,16 @@ export default class DogClient {
 
     sendGauge(metric: string, value: number): Promise<Response> {
         if (this.mock) {
+            this._addToMockData(metric, value, []);
             return Promise.resolve(Response.MOCKED);
         }
         return this._send(metric, value, this.standardGaugeOptions);
     }
 
-    _send(metric: string, count: number, options: any): Promise<Response> {
+    private _send(metric: string, count: number, options: any): Promise<Response> {
         return new Promise<Response>(
             (resolve, reject) =>
-                dogapi.metric.send(this.getFullMetric(metric), count, options, (err: Error, resp: any) => {
+                dogapi.metric.send(this._getFullMetric(metric), count, options, (err: Error, resp: any) => {
                     if (err) {
                         console.error(err);
                         resolve(Response.ERROR);
@@ -104,7 +120,33 @@ export default class DogClient {
         );
     }
 
-    private getFullMetric(metric: string): string {
+    private _getFullMetric(metric: string): string {
         return this.prefix + "." + metric;
+    }
+
+    private _addToMockData(metric: string, count: number, tags: Array<string>) {
+        tags = tags.concat(this.tags);
+        if (this.mockData[metric]) {
+            tags.forEach(tag => {
+                if (this.mockData[metric][tag]) {
+                    this.mockData[metric][tag] += count;
+                } else {
+                    this.mockData[metric][tag] = count;
+                }
+            })
+        } else {
+            this.mockData[metric] = {};
+            tags.forEach(tag => this.mockData[metric][tag] = count);
+        }
+    }
+
+    getMetric(metric: string, tag: string) {
+        if (!this.mockData[metric]) return 0;
+        if (!this.mockData[metric][tag]) return 0;
+        return this.mockData[metric][tag];
+    }
+
+    clearMockData() {
+        this.mockData = {};
     }
 }
