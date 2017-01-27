@@ -67,6 +67,16 @@ export default class DogClient {
         }
     }
 
+    addPrefix(prefix: string) {
+        this.prefix += '.' + prefix;
+    }
+
+    addTags(tags: string[]) {
+        tags.forEach(tag => {
+            if (this.tags.indexOf(tag) === -1) this.tags.push(tag);
+        })
+    }
+
     sendCountOne(metric: string): Promise<Response> {
         if (this.mock) {
             this._addToMockData(metric, 1, []);
