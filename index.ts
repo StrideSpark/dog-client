@@ -117,6 +117,14 @@ export default class DogClient {
         return this._send(metric, value, this.standardGaugeOptions);
     }
 
+    sendGaugeWithTags(metric: string, value: number, tags: Array<string>): Promise<Response> {
+        if (this.mock) {
+            this._addToMockData(metric, value, tags);
+            return Promise.resolve(Response.MOCKED);
+        }
+        return this._send(metric, value, { host: this.host, tags: this.tags.concat(tags), type: "gauge" });
+    }
+
     private _send(metric: string, count: number, options: any): Promise<Response> {
         return new Promise<Response>(
             (resolve, reject) =>
