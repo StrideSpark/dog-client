@@ -1,26 +1,30 @@
-/**
- * Created by meganschoendorf on 6/3/16.
- */
-
 import { fetchCred } from 'credstash-promise';
 const HotShots = require('hot-shots');
-
-/*
-name: Stat name required
-value: Stat value required except in increment/decrement where it defaults to 1/-1 respectively
-sampleRate: Sends only a sample of data to StatsD default: 1
-tags: The Array of tags to add to metrics default: []
-callback: The callback to execute once the metric has been sent or buffered
-*/
 
 type statsdFunction = (
     /**
      * name: Stat name (required)
      */
     name: string,
+
+    /**
+     * value: Stat value required except in increment/decrement where it defaults to 1/-1 respectively
+     */
     value: number,
+
+    /**
+     * sampleRate: Sends only a sample of data to StatsD default: 1
+     */
     sampleRate?: number,
+
+    /**
+     * tags: The Array of tags to add to metrics default: []
+     */
     tags?: string[],
+
+    /**
+     * callback: The callback to execute once the metric has been sent or buffered
+     */
     cb?: (err: any, bytes: number) => void
 ) => void;
 
@@ -43,6 +47,7 @@ export interface MockData {
     [index: string]: { [tag: string]: number }
 }
 
+const DEFAULT_SAMPLE_RATE = 1;
 export default class DogClient {
     private tags: Array<string> = [];
     private host: string;
@@ -51,12 +56,12 @@ export default class DogClient {
     private _client: StatsD;
 
     initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock: boolean) {
-
         const statsdHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'datadog-statsd.default' : 'localhost';
         this.tags = tags;
         this._client = new HotShots({
             host: statsdHost,
             prefix: prefix.slice(-1) === '.' ? prefix : prefix + '.',
+            // not using globaltags because of mock data:
             // globalTags: tags.concat('env:' + env),
         }) as StatsD;
         this.host = host;
@@ -67,25 +72,7 @@ export default class DogClient {
             return Response.MOCKED;
         }
 
-        // let keys: Array<string> = await Promise.all([
-        //     fetchCred(env + ".datadog.appkey"),
-        //     fetchCred(env + ".datadog.apikey")
-        // ]);
-
-        // let app_key: string = keys[0];
-        // let api_key: string = keys[1];
-
-        // if (app_key && api_key) {
-        //     dogapi.initialize({
-        //         api_key: api_key,
-        //         app_key: app_key
-        //     });
         return Response.OK;
-
-        // } else {
-        //     console.error("Could not load data dog creds from credstash");
-        //     return Response.ERROR;
-        // }
     }
 
     addTags(tags: string[]) {
@@ -99,7 +86,7 @@ export default class DogClient {
             this._addToMockData(metric, 1, []);
             return;
         }
-        this._client.increment(metric, 1, /*sampling rate*/undefined);
+        this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE);
     }
 
     sendCountOneWithTags(metric: string, tags: Array<string>) {
@@ -108,7 +95,7 @@ export default class DogClient {
             return;
         }
 
-        this._client.increment(metric, 1, /*sampling rate*/undefined, tags.concat(this.tags));
+        this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE, tags.concat(this.tags));
     }
 
     /**
@@ -124,7 +111,7 @@ export default class DogClient {
 
         return new Promise<number>(
             (resolve, reject) => {
-                this._client.increment(metric, 1, /*sampling rate*/undefined, tags, (err, bytes) => {
+                this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE, tags, (err, bytes) => {
                     if (err) reject(err);
                     this._client.close(err => {
                         if (err) { console.error(err, 'failed to close statsd') }
@@ -147,7 +134,7 @@ export default class DogClient {
             this._addToMockData(metric, count, tags);
             return;
         }
-        this._client.increment(metric, count,  /*sampling rate*/undefined, tags.concat(this.tags));
+        this._client.increment(metric, count, DEFAULT_SAMPLE_RATE, tags.concat(this.tags));
     }
 
     sendGauge(metric: string, value: number) {
@@ -163,7 +150,7 @@ export default class DogClient {
             this._addToMockData(metric, value, tags);
             return;
         }
-        this._client.gauge(metric, value, undefined /*sample rate*/, tags.concat(this.tags));
+        this._client.gauge(metric, value, DEFAULT_SAMPLE_RATE, tags.concat(this.tags));
     }
 
     histogram(metric: string, value: number, tags: Array<string>) {
@@ -171,7 +158,7 @@ export default class DogClient {
             this._addToMockData(metric, value, tags);
             return;
         }
-        this._client.histogram(metric, value, undefined /*sample rate*/, tags.concat(this.tags));
+        this._client.histogram(metric, value, DEFAULT_SAMPLE_RATE, tags.concat(this.tags));
     }
 
     private _addToMockData(metric: string, count: number, tags: Array<string>) {
