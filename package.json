@@ -1,6 +1,6 @@
 {
   "name": "dog-client",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "dogapi wrapper with typescript definitions",
   "main": "index.js",
   "typings": "index.d.ts",
@@ -16,18 +16,17 @@
   "license": "MIT",
   "repository": "StrideSpark/dog-client",
   "dependencies": {
-    "credstash-promise": "2.0.3",
-    "dogapi": "2.6.0"
+    "hot-shots": "^4.4.0"
   },
   "devDependencies": {
     "@types/chai": "3.4.34",
     "@types/mocha": "2.2.32",
     "@types/node": "6.0.41",
-    "aws-sdk": "2.6.5",
+    "aws-sdk": "^2.38.0",
     "chai": "3.5.0",
     "istanbul": "0.4.5",
     "mocha": "3.1.0",
     "publish": "0.6.0",
-    "typescript": "2.0.10"
+    "typescript": "^2.2.2"
   }
 }
