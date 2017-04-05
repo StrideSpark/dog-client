@@ -153,7 +153,7 @@ export default class DogClient {
         tags?: string[]
     ) {
         return new Promise<any>(
-            (resolve, reject) => this._client.event(title, text, options, tags, (err: any, res: any) => {
+            (resolve, reject) => this._client.event(title, text, options, this.tags.concat(tags || []), (err: any, res: any) => {
                 if (err) reject(err);
                 resolve(res);
             })
@@ -183,7 +183,7 @@ export default class DogClient {
         tags?: string[]
     ) {
         return new Promise<any>(
-            (resolve, reject) => this._client.check(name, status, options, tags, (err: any, res: any) => {
+            (resolve, reject) => this._client.check(name, status, options, this.tags.concat(tags || []), (err: any, res: any) => {
                 if (err) reject(err);
                 resolve(res);
             })
