@@ -88,7 +88,7 @@ export default class DogClient {
             this._addToMockData(metric, 1, []);
             return;
         }
-        this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE);
+        this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE, this.tags);
     }
 
     sendCountOneWithTags(metric: string, tags: Array<string>) {
@@ -113,7 +113,7 @@ export default class DogClient {
 
         return new Promise<number>(
             (resolve, reject) => {
-                this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE, tags, (err, bytes) => {
+                this._client.increment(metric, 1, DEFAULT_SAMPLE_RATE, tags.concat(this.tags), (err, bytes) => {
                     if (err) reject(err);
                     this._client.close(err => {
                         if (err) { console.error(err, 'failed to close statsd') }
@@ -128,7 +128,7 @@ export default class DogClient {
             this._addToMockData(metric, count, []);
             return;
         }
-        this._client.increment(metric, count);
+        this._client.increment(metric, count, DEFAULT_SAMPLE_RATE, this.tags);
     }
 
     sendCountWithTags(metric: string, count: number, tags: Array<string>) {
@@ -144,7 +144,7 @@ export default class DogClient {
             this._addToMockData(metric, value, []);
             return;
         }
-        this._client.gauge(metric, value);
+        this._client.gauge(metric, value, DEFAULT_SAMPLE_RATE, this.tags);
     }
 
     sendGaugeWithTags(metric: string, value: number, tags: Array<string>) {
