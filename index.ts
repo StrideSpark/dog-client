@@ -1,39 +1,87 @@
-import { fetchCred } from 'credstash-promise';
 const HotShots = require('hot-shots');
 
+/**
+ * Gauges a stat by a specified amount
+ * @param stat {String|Array} The stat(s) to send
+ * @param value The value to send
+ * @param sampleRate {Number=} The Number of times to sample (0 to 1). Optional.
+ * @param tags {Array=} The Array of tags to add to metrics. Optional.
+ * @param callback {Function=} Callback when message is done being delivered. Optional.
+ */
 type statsdFunction = (
-    /**
-     * name: Stat name (required)
-     */
     name: string,
-
-    /**
-     * value: Stat value required except in increment/decrement where it defaults to 1/-1 respectively
-     */
     value: number,
-
-    /**
-     * sampleRate: Sends only a sample of data to StatsD default: 1
-     */
     sampleRate?: number,
-
-    /**
-     * tags: The Array of tags to add to metrics default: []
-     */
     tags?: string[],
-
-    /**
-     * callback: The callback to execute once the metric has been sent or buffered
-     */
     cb?: (err: any, bytes: number) => void
 ) => void;
+
+const enum CheckStatus {
+    OK = 0,
+    WARNING = 1,
+    CRITICAL = 2,
+    UNKNOWN = 3,
+}
 
 declare interface StatsD {
     increment: statsdFunction
     decrement: statsdFunction
     gauge: statsdFunction
     histogram: statsdFunction
-    close: (cb?: (err: any) => void) => void
+    close(cb?: (err: any) => void): void
+
+    /**
+     * Send on an event
+     * @param title {String} The title of the event
+     * @param text {String} The description of the event.  Optional- title is used if not given.
+     * @param options
+     *   @option date_happened {Date} Assign a timestamp to the event. Default is now.
+     *   @option hostname {String} Assign a hostname to the event.
+     *   @option aggregation_key {String} Assign an aggregation key to the event, to group it with some others.
+     *   @option priority {String} Can be ‘normal’ or ‘low’. Default is 'normal'.
+     *   @option source_type_name {String} Assign a source type to the event.
+     *   @option alert_type {String} Can be ‘error’, ‘warning’, ‘info’ or ‘success’. Default is 'info'.
+     * @param tags {Array=} The Array of tags to add to metrics. Optional.
+     * @param callback {Function=} Callback when message is done being delivered. Optional.
+     */
+    event(
+        title: string,
+        text: string,
+        options?: {
+            date_happened?: Date,
+            hostname: string,
+            aggregation_key: string,
+            priority: string,
+            source_type_name: string,
+            alert_type: 'error' | 'warning' | 'info' | 'success',
+        },
+        tags?: string[],
+        callback?: (err: any, res: any) => void,
+    ): void
+
+
+    /**
+     * Send a service check
+     * @param name {String} The name of the service check
+     * @param status {Number=} The status of the service check (0 to 3).
+     * @param options
+     *   @option date_happened {Date} Assign a timestamp to the event. Default is now.
+     *   @option hostname {String} Assign a hostname to the check.
+     *   @option message {String} Assign a message to the check.
+     * @param tags {Array=} The Array of tags to add to the check. Optional.
+     * @param callback {Function=} Callback when message is done being delivered. Optional.
+     */
+    check(
+        name: string,
+        status: CheckStatus,
+        options?: {
+            date_happened?: Date,
+            hostname: string,
+            message: string,
+        },
+        tags?: string[],
+        callback?: (err: any, res: any) => void,
+    ): void
 }
 
 
@@ -75,6 +123,71 @@ export default class DogClient {
         }
 
         return Response.OK;
+    }
+
+    /**
+     * Send on an event
+     * @param title {String} The title of the event
+     * @param text {String} The description of the event.  Optional- title is used if not given.
+     * @param options
+     *   @option date_happened {Date} Assign a timestamp to the event. Default is now.
+     *   @option hostname {String} Assign a hostname to the event.
+     *   @option aggregation_key {String} Assign an aggregation key to the event, to group it with some others.
+     *   @option priority {String} Can be ‘normal’ or ‘low’. Default is 'normal'.
+     *   @option source_type_name {String} Assign a source type to the event.
+     *   @option alert_type {String} Can be ‘error’, ‘warning’, ‘info’ or ‘success’. Default is 'info'.
+     * @param tags {Array=} The Array of tags to add to metrics. Optional.
+     * @param callback {Function=} Callback when message is done being delivered. Optional.
+     */
+    async event(
+        title: string,
+        text: string,
+        options?: {
+            date_happened?: Date,
+            hostname: string,
+            aggregation_key: string,
+            priority: string,
+            source_type_name: string,
+            alert_type: 'error' | 'warning' | 'info' | 'success',
+        },
+        tags?: string[]
+    ) {
+        return new Promise<any>(
+            (resolve, reject) => this._client.event(title, text, options, tags, (err: any, res: any) => {
+                if (err) reject(err);
+                resolve(res);
+            })
+        );
+    }
+
+
+    /**
+     * Send a service check
+     * @param name {String} The name of the service check
+     * @param status {Number=} The status of the service check (0 to 3).
+     * @param options
+     *   @option date_happened {Date} Assign a timestamp to the event. Default is now.
+     *   @option hostname {String} Assign a hostname to the check.
+     *   @option message {String} Assign a message to the check.
+     * @param tags {Array=} The Array of tags to add to the check. Optional.
+     * @param callback {Function=} Callback when message is done being delivered. Optional.
+     */
+    async check(
+        name: string,
+        status: CheckStatus,
+        options?: {
+            date_happened?: Date,
+            hostname: string,
+            message: string,
+        },
+        tags?: string[]
+    ) {
+        return new Promise<any>(
+            (resolve, reject) => this._client.check(name, status, options, tags, (err: any, res: any) => {
+                if (err) reject(err);
+                resolve(res);
+            })
+        );
     }
 
     addTags(tags: string[]) {
@@ -162,6 +275,7 @@ export default class DogClient {
         }
         this._client.histogram(metric, value, DEFAULT_SAMPLE_RATE, tags.concat(this.tags));
     }
+
 
     private _addToMockData(metric: string, count: number, tags: Array<string>) {
         tags = tags.concat(this.tags);
