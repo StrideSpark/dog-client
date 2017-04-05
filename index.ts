@@ -16,7 +16,7 @@ type statsdFunction = (
     cb?: (err: any, bytes: number) => void
 ) => void;
 
-const enum CheckStatus {
+export const enum CheckStatus {
     OK = 0,
     WARNING = 1,
     CRITICAL = 2,
