@@ -66,6 +66,8 @@ export default class DogClient {
         }) as StatsD;
         this.host = host;
         this.tags = tags.concat('env:' + env)
+        if (process.env.BUILD_NUM && process.env.BUILD_HASH) this.tags = tags.concat('build:' + process.env.BUILD_NUM + '_' + process.env.BUILD_HASH)
+
         //mock means that nothing gets fired
         if (mock) {
             this.mock = true;
