@@ -3,6 +3,9 @@
  */
 
 import { fetchCred } from 'credstash-promise';
+import * as net from 'net';
+import * as util from 'util';
+
 let dogapi = require('dogapi');
 
 export enum Response {
@@ -14,6 +17,9 @@ export enum Response {
 export interface MockData {
     [index: string]: { [tag: string]: number }
 }
+//        const statsdHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'datadog-statsd.default' : 'localhost';
+
+const socket = new net.Socket()
 
 export default class DogClient {
     private tags: Array<string> = [];
@@ -22,7 +28,7 @@ export default class DogClient {
     private standardOptions: { [index: string]: any };
     private standardGaugeOptions: { [index: string]: any };
     private mock: boolean = false;
-    private mockData: MockData = {}
+    private mockData: MockData = {};
 
     async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock: boolean): Promise<Response> {
         this.prefix = prefix;
@@ -32,6 +38,9 @@ export default class DogClient {
         if (this.tags.indexOf('env:' + env) < 0) {
             this.tags.push('env:' + env);
         }
+        if (process.env.BUILD_NUM && process.env.BUILD_HASH) tags.push('build:' + process.env.BUILD_NUM + '_' + process.env.BUILD_HASH)
+
+        const wavefrontHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'wavefront-proxy.kube-system' : 'localhost';
 
         this.standardOptions = {
             host: this.host,
@@ -45,6 +54,8 @@ export default class DogClient {
             this.mock = true;
             return Response.MOCKED;
         }
+
+        openSocket(wavefrontHost, 2878);
 
         let keys: Array<string> = await Promise.all([
             fetchCred(env + ".datadog.appkey"),
@@ -126,6 +137,7 @@ export default class DogClient {
     }
 
     private _send(metric: string, count: number, options: any): Promise<Response> {
+        this.writeToWavefront(metric, count, this.host, options && options.tags)
         return new Promise<Response>(
             (resolve, reject) =>
                 dogapi.metric.send(this._getFullMetric(metric), count, options, (err: Error, resp: any) => {
@@ -167,4 +179,60 @@ export default class DogClient {
     clearMockData() {
         this.mockData = {};
     }
+
+    writeToWavefront(name: string, value: number, source: string, tags: string[]) {
+        if (retries >= 10) {
+            // broken, dont bother
+            return;
+        }
+        const formattedTags = tags && tags.map(t => t.replace(':', '=')).join(' ') || '';
+        var metricLine = `${name} ${value} source="${source}" ${formattedTags}`;
+        try {
+            socket.write(metricLine + '\n')
+        } catch (err) {
+            // gulp, dont break things if we cant write to wavefront
+        }
+    }
+
 }
+
+
+let retries = 0;
+let retrying = false;
+
+function openSocket(host: string, port: number) {
+    try {
+        socket.removeAllListeners();
+        socket.destroy();
+        socket.unref();
+        socket.setKeepAlive(true);
+        socket.on('connect', onConnect.bind({}, socket));
+        socket.on('error', onError.bind({}, socket));
+        socket.connect(port, host);
+    } catch (err) {
+        console.error("error connecting to wavefront", err)
+        // gulp, dont break things if we cant write to wavefront
+    }
+}
+
+function onConnect(socket: net.Socket, err: any) {
+    console.log('connected');
+    retrying = false;
+    retries = 0;
+}
+
+
+
+function onError(socket: net.Socket, err: any) {
+    if (retries < 10 && !retrying) {
+        retrying = true;
+        retries++;
+        console.error("wavefront error, retrying", retries, err);
+
+        // Re-open socket
+        setTimeout(openSocket, 1000);
+    } else if (retries >= 10) {
+        console.error("gave up connecting to wavefront");
+    }
+}
+
