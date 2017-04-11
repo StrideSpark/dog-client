@@ -186,7 +186,7 @@ export default class DogClient {
             return;
         }
         const formattedTags = tags && tags.map(t => t.replace(':', '=')).join(' ') || '';
-        var metricLine = `${name} ${value} source="${source}" ${formattedTags}`;
+        var metricLine = `${this.prefix.slice(-1) === '.' ? '' : '.'}${name} ${value} source="${source}" ${formattedTags}`;
         try {
             socket.write(metricLine + '\n')
         } catch (err) {
