@@ -1,7 +1,3 @@
-/**
- * Created by meganschoendorf on 6/3/16.
- */
-
 import { fetchCred } from 'credstash-promise';
 import * as net from 'net';
 import * as util from 'util';
