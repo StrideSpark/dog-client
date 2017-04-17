@@ -17,6 +17,8 @@ export interface MockData {
 
 const socket = new net.Socket()
 
+const INVALID_FOR_POINTTAG_KEY = /[^A-Za-z0-9_\-\.]/g
+
 export default class DogClient {
     private tags: Array<string> = [];
     private prefix: string;
@@ -181,8 +183,9 @@ export default class DogClient {
             // broken, dont bother
             return;
         }
-        const formattedTags = tags && tags.map(t => t.replace(':', '=')).join(' ') || '';
-        var metricLine = `${this._getFullMetric(name)} ${value} source="${source}" ${formattedTags}`;
+        //Key - Valid characters are: a-z,A-Z, 0-9, hyphen ("-"), underscore ("_"), dot (".")
+        const formattedTags = tags && tags.map(tag => tag.split(':')).map(splittag => `${splittag[0].replace(INVALID_FOR_POINTTAG_KEY, '_')}="${splittag[1]}"`).join(' ') || '';
+        var metricLine = `"${this._getFullMetric(name)}" ${value} source="${source}" ${formattedTags}`;
         try {
             socket.write(metricLine + '\n')
         } catch (err) {

@@ -43,10 +43,10 @@ describe("basic test", function () {
     it("real", async function () {
         this.timeout(10000);
         let client = new DogClient();
-        assert.equal(await client.initDogAPI('test', ["tag:1"], "development.prefix", "testhost", false), Response.OK);
+        assert.equal(await client.initDogAPI('test', ["tag:_1"], "development.prefix", "testhost", false), Response.OK);
         assert.equal(await client.sendCountOne("fake.metric"), Response.OK);
-        assert.equal(await client.sendCount("fake.metric", 2), Response.OK);
-        assert.equal(await client.sendCountWithTags("fake.metric", 5, ["tag:2"]), Response.OK);
+        assert.equal(await client.sendCount("fake.me_tri-c*?", 2), Response.OK);
+        assert.equal(await client.sendCountWithTags("fake.metric", 5, ["tag's:_2"]), Response.OK);
         assert.equal(await client.sendGauge("fake.gauge", 5), Response.OK);
 
         client = new DogClient();
