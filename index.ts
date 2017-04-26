@@ -30,13 +30,15 @@ export default class DogClient {
 
     async initDogAPI(env: string, tags: Array<string>, prefix: string, host: string, mock: boolean): Promise<Response> {
         this.prefix = prefix;
-        this.host = host;
+        // this.host = host;
+        this.host = process.env.HOSTNAME;
 
         tags.forEach(a => this.tags.push(a));
         if (this.tags.indexOf('env:' + env) < 0) {
             this.tags.push('env:' + env);
         }
-        if (process.env.BUILD_NUM && process.env.BUILD_HASH) tags.push('build:' + process.env.BUILD_NUM + '_' + process.env.BUILD_HASH)
+        if (process.env.BUILD_NUM && process.env.BUILD_HASH) this.tags.push('build:' + process.env.BUILD_NUM + '_' + process.env.BUILD_HASH.slice(0, 7))
+
 
         const wavefrontHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'wavefront-proxy.kube-system' : 'localhost';
 
