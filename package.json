@@ -1,6 +1,6 @@
 {
   "name": "dog-client",
-  "version": "3.2.4",
+  "version": "3.2.5",
   "description": "dogapi wrapper with typescript definitions",
   "main": "index.js",
   "typings": "index.d.ts",
