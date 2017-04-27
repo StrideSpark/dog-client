@@ -1,6 +1,9 @@
 import { fetchCred } from 'credstash-promise';
 import * as net from 'net';
 import * as util from 'util';
+import { Socket } from "net";
+var reconnect = require('net-socket-reconnect')
+var wavefrontClient: Socket;
 
 let dogapi = require('dogapi');
 
@@ -15,7 +18,6 @@ export interface MockData {
 }
 //        const statsdHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'datadog-statsd.default' : 'localhost';
 
-const socket = new net.Socket()
 
 const INVALID_FOR_POINTTAG_KEY = /[^A-Za-z0-9_\-\.]/g
 
@@ -40,7 +42,8 @@ export default class DogClient {
         if (process.env.BUILD_NUM && process.env.BUILD_HASH) this.tags.push('build:' + process.env.BUILD_NUM + '_' + process.env.BUILD_HASH.slice(0, 7))
 
 
-        const wavefrontHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'wavefront-proxy.kube-system' : 'localhost';
+        let wavefrontHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'wavefront-proxy.kube-system' : process.env.WAVEFRONT_PROXY_HOST;
+
 
         this.standardOptions = {
             host: this.host,
@@ -55,7 +58,20 @@ export default class DogClient {
             return Response.MOCKED;
         }
 
-        openSocket(wavefrontHost, 2878);
+        if (!wavefrontClient && wavefrontHost) {
+            wavefrontClient = reconnect({
+                port: 2878,
+                host: wavefrontHost,
+                reconnectOnError: true,
+                reconnectOnClose: true,
+                reconnectOnEnd: true,
+                reconnectInterval: 1000,
+                reconnectTimes: 60,
+                reconnectOnCreate: true,
+            })
+            wavefrontClient.on('reconnect', () => console.warn('trying to reconnect to wavefront-proxy'));
+            wavefrontClient.on('error', (err: any) => console.error('error with wavefront-proxy', err));
+        }
 
         let keys: Array<string> = await Promise.all([
             fetchCred(env + ".datadog.appkey"),
@@ -181,59 +197,14 @@ export default class DogClient {
     }
 
     writeToWavefront(name: string, value: number, source: string, tags: string[]) {
-        if (retries >= 10) {
-            // broken, dont bother
-            return;
-        }
         //Key - Valid characters are: a-z,A-Z, 0-9, hyphen ("-"), underscore ("_"), dot (".")
         const formattedTags = tags && tags.map(tag => tag.split(':')).map(splittag => `${splittag[0].replace(INVALID_FOR_POINTTAG_KEY, '_')}="${splittag[1]}"`).join(' ') || '';
         var metricLine = `"${this._getFullMetric(name)}" ${value} source="${source}" ${formattedTags}`;
         try {
-            socket.write(metricLine + '\n')
+            wavefrontClient && wavefrontClient.write(metricLine + '\n')
         } catch (err) {
             // gulp, dont break things if we cant write to wavefront
         }
     }
 
 }
-
-
-let retries = 0;
-let retrying = false;
-
-function openSocket(host: string, port: number) {
-    try {
-        socket.removeAllListeners();
-        socket.destroy();
-        socket.unref();
-        socket.setKeepAlive(true);
-        socket.on('connect', onConnect.bind({}, socket));
-        socket.on('error', onError.bind({}, socket));
-        socket.connect(port, host);
-    } catch (err) {
-        console.error("error connecting to wavefront", err)
-        // gulp, dont break things if we cant write to wavefront
-    }
-}
-
-function onConnect(socket: net.Socket, err: any) {
-    console.log('connected');
-    retrying = false;
-    retries = 0;
-}
-
-
-
-function onError(socket: net.Socket, err: any) {
-    if (retries < 10 && !retrying) {
-        retrying = true;
-        retries++;
-        console.error("wavefront error, retrying", retries, err);
-
-        // Re-open socket
-        setTimeout(openSocket, 1000);
-    } else if (retries >= 10) {
-        console.error("gave up connecting to wavefront");
-    }
-}
-
