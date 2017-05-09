@@ -42,7 +42,7 @@ export default class DogClient {
         if (process.env.BUILD_NUM && process.env.BUILD_HASH) this.tags.push('build:' + process.env.BUILD_NUM + '_' + process.env.BUILD_HASH.slice(0, 7))
 
 
-        let wavefrontHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'wavefront-proxy.kube-system' : process.env.WAVEFRONT_PROXY_HOST;
+        // let wavefrontHost = process.env.KUBERNETES_SERVICE_HOST != undefined ? 'wavefront-proxy.kube-system' : process.env.WAVEFRONT_PROXY_HOST;
 
 
         this.standardOptions = {
@@ -58,20 +58,20 @@ export default class DogClient {
             return Response.MOCKED;
         }
 
-        if (!wavefrontClient && wavefrontHost) {
-            wavefrontClient = reconnect({
-                port: 2878,
-                host: wavefrontHost,
-                reconnectOnError: true,
-                reconnectOnClose: true,
-                reconnectOnEnd: true,
-                reconnectInterval: 1000,
-                reconnectTimes: 60,
-                reconnectOnCreate: true,
-            })
-            wavefrontClient.on('reconnect', () => console.warn('trying to reconnect to wavefront-proxy'));
-            wavefrontClient.on('error', (err: any) => console.error('error with wavefront-proxy', err));
-        }
+        // if (!wavefrontClient && wavefrontHost) {
+        //     wavefrontClient = reconnect({
+        //         port: 2878,
+        //         host: wavefrontHost,
+        //         reconnectOnError: true,
+        //         reconnectOnClose: true,
+        //         reconnectOnEnd: true,
+        //         reconnectInterval: 1000,
+        //         reconnectTimes: 60,
+        //         reconnectOnCreate: true,
+        //     })
+        //     wavefrontClient.on('reconnect', () => console.warn('trying to reconnect to wavefront-proxy'));
+        //     wavefrontClient.on('error', (err: any) => console.error('error with wavefront-proxy', err));
+        // }
 
         let keys: Array<string> = await Promise.all([
             fetchCred(env + ".datadog.appkey"),
