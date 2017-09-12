@@ -12,3 +12,8 @@ deployment:
     branch: master
     commands:
       - if [[ $DAILY_TESTS != true ]]; then npm run 2npm; fi
+experimental:
+  notify:
+    branches:
+      only:
+        - master
